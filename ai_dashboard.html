@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Dashboard - Air Purification System</title>
+    <link rel="stylesheet" href="../assets/css/tailwind.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+        
+        .ai-glow {
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4);
+            background-size: 200% 200%;
+            animation: gradient 3s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .ai-badge {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .prediction-card {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .prediction-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .decision-panel {
+            background: linear-gradient(135deg, #2d3748, #4a5568);
+            border-radius: 15px;
+            padding: 20px;
+            color: white;
+        }
+        
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            display: inline-block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .anomaly-indicator {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        
+        .confidence-bar {
+            height: 6px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80, #22c55e);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 glassmorphism p-6 z-50">
+        <div class="flex items-center space-x-3 mb-8">
+            <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                <i class="fas fa-brain text-white text-xl"></i>
+            </div>
+            <div>
+                <h2 class="text-white font-bold text-lg">AI Dashboard</h2>
+                <p class="text-gray-300 text-xs">Intelligent Control</p>
+            </div>
+        </div>
+        
+        <nav class="space-y-2">
+            <a href="#overview" class="sidebar-item block text-white p-3 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all">
+                <i class="fas fa-chart-line mr-3"></i>AI Overview
+            </a>
+            <a href="#predictions" class="sidebar-item block text-white p-3 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all">
+                <i class="fas fa-brain mr-3"></i>Predictions
+            </a>
+            <a href="#decisions" class="sidebar-item block text-white p-3 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all">
+                <i class="fas fa-robot mr-3"></i>AI Decisions
+            </a>
+            <a href="#anomalies" class="sidebar-item block text-white p-3 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all">
+                <i class="fas fa-exclamation-triangle mr-3"></i>Anomalies
+            </a>
+            <a href="#performance" class="sidebar-item block text-white p-3 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all">
+                <i class="fas fa-tachometer-alt mr-3"></i>Performance
+            </a>
+        </nav>
+        
+        <div class="absolute bottom-6 left-6 right-6">
+            <div class="ai-badge">
+                <span class="pulse-dot"></span>
+                AI Active
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="ml-64 p-6">
+        <!-- Header -->
+        <header class="glassmorphism rounded-2xl p-6 mb-6">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-bold text-white mb-2">AI-Powered Air Purification</h1>
+                    <p class="text-gray-200">Intelligent monitoring and decision making</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-white text-sm">AI Status</p>
+                        <p class="text-green-400 font-semibold">Online</p>
+                    </div>
+                    <div class="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center">
+                        <i class="fas fa-brain text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- AI Overview Section -->
+        <section id="overview" class="section">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                <!-- Current AQI with AI Prediction -->
+                <div class="prediction-card">
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold mb-1">Current AQI</h3>
+                                <p class="text-3xl font-bold" id="current-aqi">--</p>
+                            </div>
+                            <div class="ai-badge">
+                                <i class="fas fa-brain text-xs"></i>
+                                AI
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-sm opacity-80">Predicted (15min)</span>
+                                <span class="font-semibold" id="predicted-aqi">--</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="confidence-bar" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs opacity-60">Confidence: <span id="confidence-value">--</span>%</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Decision Panel -->
+                <div class="decision-panel">
+                    <h3 class="text-lg font-semibold mb-4">AI Decision</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <p class="text-sm opacity-80">Recommended Action</p>
+                            <p class="text-xl font-bold text-green-400" id="ai-action">--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm opacity-80">Reasoning</p>
+                            <p class="text-sm" id="ai-reason">--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm opacity-80">Spray Intensity</p>
+                            <p class="text-lg font-semibold" id="spray-intensity">--</p>
+                        </div>
+                        <div>
+                            <p class="text-sm opacity-80">Estimated Time</p>
+                            <p class="text-sm"><span id="estimated-time">--</span> minutes</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- AI Metrics -->
+                <div class="glassmorphism rounded-2xl p-6">
+                    <h3 class="text-lg font-semibold text-white mb-4">AI Performance</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <div class="flex justify-between text-white mb-1">
+                                <span class="text-sm">Prediction Accuracy</span>
+                                <span class="text-sm font-semibold" id="accuracy">--%</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="accuracy-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-white mb-1">
+                                <span class="text-sm">Decision Success Rate</span>
+                                <span class="text-sm font-semibold" id="success-rate">--%</span>
+                            </div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" id="success-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-white" id="total-decisions">--</p>
+                            <p class="text-xs text-gray-300">Total AI Decisions</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Anomaly Alert -->
+            <div id="anomaly-alert" class="hidden glassmorphism rounded-2xl p-4 mb-6 border-l-4 border-red-500">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <div class="anomaly-indicator">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Anomaly Detected
+                        </div>
+                        <p class="text-white" id="anomaly-message">--</p>
+                    </div>
+                    <button onclick="dismissAnomaly()" class="text-white hover:text-gray-300">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Predictions Section -->
+        <section id="predictions" class="section hidden">
+            <div class="glassmorphism rounded-2xl p-6 mb-6">
+                <h2 class="text-2xl font-bold text-white mb-6">AQI Predictions</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Prediction Chart -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Actual vs Predicted</h3>
+                        <canvas id="prediction-chart"></canvas>
+                    </div>
+                    
+                    <!-- Prediction Details -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-white mb-4">Prediction Details</h3>
+                        <div class="space-y-3">
+                            <div class="glassmorphism rounded-xl p-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white">15 Minutes</span>
+                                    <span class="text-xl font-bold text-white" id="pred-15min">--</span>
+                                </div>
+                            </div>
+                            <div class="glassmorphism rounded-xl p-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white">30 Minutes</span>
+                                    <span class="text-xl font-bold text-white" id="pred-30min">--</span>
+                                </div>
+                            </div>
+                            <div class="glassmorphism rounded-xl p-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-white">1 Hour</span>
+                                    <span class="text-xl font-bold text-white" id="pred-1hour">--</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button onclick="trainModel()" class="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition-opacity">
+                                <i class="fas fa-brain mr-2"></i>
+                                Retrain AI Model
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- AI Decisions Section -->
+        <section id="decisions" class="section hidden">
+            <div class="glassmorphism rounded-2xl p-6">
+                <h2 class="text-2xl font-bold text-white mb-6">AI Decision History</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-white">
+                        <thead>
+                            <tr class="border-b border-white border-opacity-20">
+                                <th class="text-left py-3 px-4">Time</th>
+                                <th class="text-left py-3 px-4">Decision</th>
+                                <th class="text-left py-3 px-4">Reason</th>
+                                <th class="text-left py-3 px-4">Confidence</th>
+                                <th class="text-left py-3 px-4">Outcome</th>
+                            </tr>
+                        </thead>
+                        <tbody id="decisions-table">
+                            <tr>
+                                <td colspan="5" class="text-center py-8 text-gray-400">Loading AI decisions...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Anomalies Section -->
+        <section id="anomalies" class="section hidden">
+            <div class="glassmorphism rounded-2xl p-6">
+                <h2 class="text-2xl font-bold text-white mb-6">Anomaly Detection</h2>
+                <div id="anomalies-container" class="space-y-4">
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-search text-4xl mb-4"></i>
+                        <p>Scanning for anomalies...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Performance Section -->
+        <section id="performance" class="section hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="glassmorphism rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">Model Performance</h3>
+                    <canvas id="performance-chart"></canvas>
+                </div>
+                <div class="glassmorphism rounded-2xl p-6">
+                    <h3 class="text-xl font-bold text-white mb-4">AI Statistics</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between text-white">
+                            <span>Total Predictions</span>
+                            <span class="font-semibold" id="total-predictions">--</span>
+                        </div>
+                        <div class="flex justify-between text-white">
+                            <span>Average Confidence</span>
+                            <span class="font-semibold" id="avg-confidence">--%</span>
+                        </div>
+                        <div class="flex justify-between text-white">
+                            <span>Anomalies Detected</span>
+                            <span class="font-semibold" id="anomalies-count">--</span>
+                        </div>
+                        <div class="flex justify-between text-white">
+                            <span>Model Type</span>
+                            <span class="font-semibold" id="model-type">--</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        // AI Dashboard JavaScript
+        let predictionChart = null;
+        let performanceChart = null;
+        let aiData = null;
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            startAIUpdates();
+        });
+        
+        function initializeDashboard() {
+            showSection('overview');
+            initializeCharts();
+            loadAIData();
+        }
+        
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+            
+            // Update sidebar
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('bg-white', 'bg-opacity-20');
+            });
+            
+            const activeLink = document.querySelector(`a[href="#${sectionId}"]`);
+            if (activeLink) {
+                activeLink.classList.add('bg-white', 'bg-opacity-20');
+            }
+            
+            // Load section-specific data
+            if (sectionId === 'decisions') {
+                loadDecisions();
+            } else if (sectionId === 'anomalies') {
+                loadAnomalies();
+            } else if (sectionId === 'performance') {
+                loadPerformance();
+            }
+        }
+        
+        function loadAIData() {
+            fetch('/api/ai_integration.php')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        aiData = data;
+                        updateOverview(data);
+                        updatePredictions(data);
+                        updateDecisions(data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading AI data:', error);
+                    showAIError();
+                });
+        }
+        
+        function updateOverview(data) {
+            // Update current AQI
+            if (data.sensor_data) {
+                document.getElementById('current-aqi').textContent = Math.round(data.sensor_data.aqi);
+            }
+            
+            // Update prediction
+            if (data.prediction && data.prediction.success) {
+                const pred = data.prediction.prediction;
+                document.getElementById('predicted-aqi').textContent = pred.predicted_aqi_15min;
+                document.getElementById('confidence-value').textContent = Math.round(pred.confidence * 100);
+                document.getElementById('confidence-bar').style.width = (pred.confidence * 100) + '%';
+            }
+            
+            // Update AI decision
+            if (data.decision && data.decision.success) {
+                const decision = data.decision.decision;
+                document.getElementById('ai-action').textContent = decision.action.replace(/_/g, ' ').toUpperCase();
+                document.getElementById('ai-reason').textContent = decision.reason;
+                document.getElementById('spray-intensity').textContent = decision.spray_intensity;
+                document.getElementById('estimated-time').textContent = decision.estimated_time;
+            }
+            
+            // Update anomalies
+            if (data.anomalies && data.anomalies.success && data.anomalies.anomaly_count > 0) {
+                showAnomalyAlert(data.anomalies.anomalies[0]);
+            }
+        }
+        
+        function updatePredictions(data) {
+            if (data.prediction && data.prediction.success) {
+                const pred = data.prediction.prediction;
+                document.getElementById('pred-15min').textContent = pred.predicted_aqi_15min;
+                document.getElementById('pred-30min').textContent = pred.predicted_aqi_30min;
+                document.getElementById('pred-1hour').textContent = pred.predicted_aqi_1hour;
+                
+                // Update prediction chart
+                updatePredictionChart(pred);
+            }
+        }
+        
+        function showAnomalyAlert(anomaly) {
+            const alert = document.getElementById('anomaly-alert');
+            const message = document.getElementById('anomaly-message');
+            
+            message.textContent = `Anomaly detected: AQI spike of ${anomaly.difference} at ${anomaly.timestamp}`;
+            alert.classList.remove('hidden');
+        }
+        
+        function dismissAnomaly() {
+            document.getElementById('anomaly-alert').classList.add('hidden');
+        }
+        
+        function showAIError() {
+            document.getElementById('current-aqi').textContent = 'ERROR';
+            document.getElementById('predicted-aqi').textContent = 'ERROR';
+            document.getElementById('ai-action').textContent = 'AI OFFLINE';
+            document.getElementById('ai-reason').textContent = 'AI service unavailable';
+        }
+        
+        function trainModel() {
+            fetch('/api/ai_integration.php?action=train_model', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('AI model trained successfully with ' + data.data_points + ' data points');
+                    loadAIData(); // Refresh data
+                } else {
+                    alert('Model training failed: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error training model:', error);
+                alert('Error training model');
+            });
+        }
+        
+        function initializeCharts() {
+            // Prediction Chart
+            const predCtx = document.getElementById('prediction-chart');
+            if (predCtx) {
+                predictionChart = new Chart(predCtx.getContext('2d'), {
+                    type: 'line',
+                    data: {
+                        labels: [],
+                        datasets: [{
+                            label: 'Actual AQI',
+                            data: [],
+                            borderColor: 'rgb(75, 192, 192)',
+                            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                            tension: 0.1
+                        }, {
+                            label: 'Predicted AQI',
+                            data: [],
+                            borderColor: 'rgb(255, 99, 132)',
+                            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            },
+                            y: {
+                                ticks: { color: 'white' },
+                                grid: { color: 'rgba(255,255,255,0.1)' }
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Performance Chart
+            const perfCtx = document.getElementById('performance-chart');
+            if (perfCtx) {
+                performanceChart = new Chart(perfCtx.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Successful', 'Failed', 'Pending'],
+                        datasets: [{
+                            data: [70, 20, 10],
+                            backgroundColor: [
+                                'rgba(34, 197, 94, 0.8)',
+                                'rgba(239, 68, 68, 0.8)',
+                                'rgba(156, 163, 175, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgb(34, 197, 94)',
+                                'rgb(239, 68, 68)',
+                                'rgb(156, 163, 175)'
+                            ],
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: 'white'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function updatePredictionChart(prediction) {
+            if (!predictionChart) return;
+            
+            // Add new data point
+            const now = new Date().toLocaleTimeString();
+            const currentAQI = parseFloat(document.getElementById('current-aqi').textContent) || 0;
+            
+            predictionChart.data.labels.push(now);
+            predictionChart.data.datasets[0].data.push(currentAQI);
+            predictionChart.data.datasets[1].data.push(prediction.predicted_aqi_15min);
+            
+            // Keep only last 10 points
+            if (predictionChart.data.labels.length > 10) {
+                predictionChart.data.labels.shift();
+                predictionChart.data.datasets[0].data.shift();
+                predictionChart.data.datasets[1].data.shift();
+            }
+            
+            predictionChart.update();
+        }
+        
+        function loadDecisions() {
+            // This would load decision history from the API
+            const table = document.getElementById('decisions-table');
+            table.innerHTML = `
+                <tr>
+                    <td class="py-3 px-4">11:30 AM</td>
+                    <td class="py-3 px-4">activate_purification</td>
+                    <td class="py-3 px-4">High AQI detected</td>
+                    <td class="py-3 px-4">85%</td>
+                    <td class="py-3 px-4"><span class="text-green-400">Success</span></td>
+                </tr>
+                <tr>
+                    <td class="py-3 px-4">11:15 AM</td>
+                    <td class="py-3 px-4">move_to_high_aqi</td>
+                    <td class="py-3 px-4">Predicted high AQI</td>
+                    <td class="py-3 px-4">78%</td>
+                    <td class="py-3 px-4"><span class="text-green-400">Success</span></td>
+                </tr>
+            `;
+        }
+        
+        function loadAnomalies() {
+            // This would load anomalies from the API
+            const container = document.getElementById('anomalies-container');
+            container.innerHTML = `
+                <div class="glassmorphism rounded-xl p-4">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h4 class="text-white font-semibold">AQI Spike Detected</h4>
+                            <p class="text-gray-300 text-sm">Unusual increase of 45 AQI points</p>
+                            <p class="text-gray-400 text-xs">Sector 18 - 11:30 AM</p>
+                        </div>
+                        <div class="anomaly-indicator">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function loadPerformance() {
+            // This would load performance metrics from the API
+            document.getElementById('total-predictions').textContent = '156';
+            document.getElementById('avg-confidence').textContent = '82%';
+            document.getElementById('anomalies-count').textContent = '3';
+            document.getElementById('model-type').textContent = 'Linear Regression';
+        }
+        
+        function startAIUpdates() {
+            // Update AI data every 30 seconds
+            setInterval(loadAIData, 30000);
+        }
+        
+        // Sidebar navigation
+        document.querySelectorAll('.sidebar-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const sectionId = this.getAttribute('href').substring(1);
+                showSection(sectionId);
+            });
+        });
+    </script>
+</body>
+</html>
